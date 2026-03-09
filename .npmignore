@@ -1,0 +1,47 @@
+# Source code (publish dist/ only)
+src/
+tsconfig.json
+
+# Tests
+test/
+tests/
+playwright.config.ts
+jest.config.js
+
+# Examples (keep in repo, not in npm package)
+examples/
+
+# Build artifacts
+node_modules/
+*.log
+.DS_Store
+
+# Test artifacts
+playwright-report/
+test-results/
+vibe-reports/
+screenshots/
+vibe-training/
+autoheal-cache/
+
+# Development
+.env
+.env.local
+.vscode/
+.idea/
+.claude/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Scripts
+scripts/
+
+# Documentation that shouldn't be in npm package
+docs/*.md
+!docs/API.md

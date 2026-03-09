@@ -1,0 +1,75 @@
+{
+  "name": "@sdetsanjay/vibe-framework",
+  "version": "1.0.0",
+  "description": "Natural language automation framework with AI-powered element healing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build",
+    "test": "jest",
+    "test:pw": "playwright test",
+    "test:pw:ui": "playwright test --ui",
+    "test:pw:headed": "playwright test --headed",
+    "test:pw:parallel": "playwright test --workers=4",
+    "report:consolidated": "ts-node scripts/generate-consolidated-report.ts",
+    "dev": "tsc --watch",
+    "example": "node dist/examples/basic-usage.js"
+  },
+  "keywords": [
+    "automation",
+    "testing",
+    "playwright",
+    "ai",
+    "natural-language",
+    "element-healing",
+    "test-automation",
+    "ai-testing",
+    "gemini",
+    "openai",
+    "groq"
+  ],
+  "author": "Sanjay Gorai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SanjayPG/vibe-framework.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SanjayPG/vibe-framework/issues"
+  },
+  "homepage": "https://github.com/SanjayPG/vibe-framework#readme",
+  "dependencies": {
+    "@sdetsanjay/autoheal-locator": "^1.1.0",
+    "@types/uuid": "^10.0.0",
+    "dotenv": "^17.2.3",
+    "proper-lockfile": "^4.1.2",
+    "uuid": "^13.0.0"
+  },
+  "peerDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "jest": "^29.7.0",
+    "playwright": "^1.40.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.0"
+  }
+}
