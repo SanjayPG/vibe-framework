@@ -12,7 +12,7 @@ Built on [@sdetsanjay/autoheal-locator](https://www.npmjs.com/package/@sdetsanja
 - 🗣️ **True Natural Language**: Write commands ANY way you want
 - 🤖 **Multi-AI Provider Support**: OpenAI, Gemini, Anthropic, DeepSeek, Groq, Grok, and local models
 - ⚡ **Smart Caching**: 95-99% latency reduction on cached runs
-- 🎯 **Training Mode**: Zero AI cost in CI/CD (record once, replay forever)
+- 🎯 **Training Mode**: Record once, replay forever in CI/CD without AI calls
 - 🔧 **Self-Healing**: Automatically adapts to UI changes via autoheal-locator
 - 🎥 **Video Recording**: Playwright-compatible video recording with HTML embedding
 - 🚀 **Parallel Testing**: Thread-safe execution with file locking (2.5x-3.5x speedup)
@@ -160,7 +160,7 @@ const session = vibe()
 ```
 
 ### Training Mode (for CI/CD)
-Record selectors once, replay with zero AI cost.
+Record selectors once, replay without AI calls.
 
 ```typescript
 // Local: Record
