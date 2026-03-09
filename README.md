@@ -149,7 +149,7 @@ const session = vibe()
   .build();
 ```
 
-### Pure AI (Like ZeroStep)
+### Pure AI
 Fresh AI analysis every time - most reliable for dynamic content.
 
 ```typescript
