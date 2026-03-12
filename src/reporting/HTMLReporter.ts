@@ -132,6 +132,18 @@ export class HTMLReporter {
             <span>Mode: ${summary.config.mode}</span>
             <span>AI: ${summary.config.aiProvider}</span>
         </div>
+        <div class="video-banner">
+            <div class="video-banner-content">
+                <div class="video-banner-icon">🎬</div>
+                <div class="video-banner-text">
+                    <div class="video-banner-title">Watch Test Videos</div>
+                    <div class="video-banner-description">Videos are available in the Playwright report</div>
+                </div>
+            </div>
+            <a href="../playwright-report/index.html" target="_blank" class="btn-playwright-report">
+                Open Playwright Report
+            </a>
+        </div>
     </header>`;
   }
 
@@ -544,6 +556,73 @@ export class HTMLReporter {
             font-size: 13px;
             color: #666;
             flex-wrap: wrap;
+        }
+
+        /* Video Banner */
+        .video-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .video-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .video-banner-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .video-banner-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .video-banner-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .video-banner-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-playwright-report {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+
+        .btn-playwright-report:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-playwright-report:active {
+            transform: translateY(0);
         }
 
         /* Overview */
@@ -1223,6 +1302,16 @@ export class HTMLReporter {
 
             .video-player {
                 max-width: 100%;
+            }
+
+            .video-banner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-playwright-report {
+                width: 100%;
+                text-align: center;
             }
         }
     `;

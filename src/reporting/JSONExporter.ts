@@ -133,8 +133,9 @@ export class JSONExporter {
             model: action.ai.model,
             estimatedCost: action.ai.estimatedCost
           },
-          // Note: Screenshots excluded to reduce file size
-          hasScreenshot: !!action.screenshot
+          // Include screenshots as base64 data URLs for unified report
+          hasScreenshot: !!action.screenshot,
+          screenshot: action.screenshot || undefined
         }))
       }))
     };

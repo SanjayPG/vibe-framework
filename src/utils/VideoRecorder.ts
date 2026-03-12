@@ -96,12 +96,58 @@ export class VideoRecorder {
       try {
         // Copy video to our directory
         if (videoPath !== newPath) {
-          await fs.promises.copyFile(videoPath, newPath);
-          await fs.promises.unlink(videoPath);
+          // Wait for file to be fully written and unlocked
+          let copied = false;
+          for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+              await this.sleep(500 * (attempt + 1)); // Wait 500ms, 1s, 1.5s, 2s, 2.5s
+
+              // Check if file exists and has content
+              const stats = await fs.promises.stat(videoPath);
+              if (stats.size > 0) {
+                // Copy the file
+                await fs.promises.copyFile(videoPath, newPath);
+                copied = true;
+
+                // Verify copy has content
+                const copiedStats = await fs.promises.stat(newPath);
+                if (copiedStats.size === 0) {
+                  console.warn(`Copied video is empty, retrying...`);
+                  copied = false;
+                  continue;
+                }
+                break;
+              } else if (attempt < 4) {
+                // File exists but empty, wait longer
+                continue;
+              }
+            } catch (copyError) {
+              if (attempt === 4) {
+                console.warn(`Failed to copy video after ${attempt + 1} attempts: ${copyError}`);
+                return videoPath; // Return original path
+              }
+            }
+          }
+
+          if (copied) {
+            // Try to delete original (non-blocking)
+            try {
+              await this.sleep(200);
+              await fs.promises.unlink(videoPath);
+            } catch (unlinkError) {
+              // Deletion failed, but copy succeeded - that's OK
+              console.log(`Video copied to: ${newPath} (original kept in test-results)`);
+            }
+            return newPath;
+          } else {
+            // Copy failed, return original
+            return videoPath;
+          }
         }
         return newPath;
       } catch (error) {
-        console.warn(`Failed to move video: ${error}`);
+        console.warn(`Failed to handle video: ${error}`);
+        // Return original path if anything fails
         return videoPath;
       }
     }
@@ -134,5 +180,13 @@ export class VideoRecorder {
    */
   getRelativePath(videoPath: string): string {
     return path.relative(process.cwd(), videoPath);
+  }
+
+  /**
+   * Sleep utility for retry delays
+   * @param ms Milliseconds to sleep
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
