@@ -18,6 +18,108 @@ Built on [@sdetsanjay/autoheal-locator](https://www.npmjs.com/package/@sdetsanja
 - 🚀 **Parallel Testing**: Thread-safe execution with file locking (2.5x-3.5x speedup)
 - 📊 **Rich Reporting**: HTML, JSON, CSV, and console reports
 
+## Quick Start
+
+Get started with Vibe Framework in 5 minutes!
+
+### Prerequisites
+
+- **Node.js 16 or higher** ([Download here](https://nodejs.org/))
+- **npm** (comes with Node.js)
+- Basic knowledge of Playwright
+
+### Step 1: Install Dependencies
+
+Create a new Playwright project or use an existing one:
+
+```bash
+# Create new Playwright project (if you don't have one)
+npm init playwright@latest
+
+# Install Vibe Framework
+npm install @sdetsanjay/vibe-framework
+
+# Install dotenv for environment variables
+npm install dotenv
+```
+
+### Step 2: Get Your API Key
+
+Choose an AI provider (we recommend **Groq** for getting started):
+
+- **Groq** (Recommended - Fast & Free): [Get API Key](https://console.groq.com/)
+- **Gemini** (Free Tier Available): [Get API Key](https://aistudio.google.com/app/apikey)
+- **OpenAI** (Paid): [Get API Key](https://platform.openai.com/api-keys)
+
+### Step 3: Configure Environment
+
+Create a `.env` file in your project root:
+
+```env
+# Add your API key (choose one)
+GROQ_API_KEY=your-groq-api-key-here
+```
+
+### Step 4: Create Your First Test
+
+Create a file `tests/example.spec.ts`:
+
+```typescript
+import { test } from '@playwright/test';
+import { vibe } from '@sdetsanjay/vibe-framework';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+test('Login with natural language', async ({ page }) => {
+  // Create Vibe session
+  const session = vibe()
+    .withPage(page)
+    .withMode('smart-cache')
+    .withAIProvider('GROQ', process.env.GROQ_API_KEY!)
+    .build();
+
+  // Navigate to the site
+  await page.goto('https://www.saucedemo.com');
+
+  // Use natural language to interact!
+  await session.do('type "standard_user" into username field');
+  await session.do('type "secret_sauce" into password field');
+  await session.do('click the login button');
+
+  // Verify the result
+  const result = await session.check('verify products page loaded');
+  console.log('Login successful:', result.success);
+
+  // Always cleanup
+  await session.shutdown();
+});
+```
+
+### Step 5: Run Your Test
+
+```bash
+npx playwright test
+```
+
+That's it! 🎉 You've just run your first natural language test!
+
+**What happens:**
+- First run: AI analyzes the page and finds elements (~1-2 seconds)
+- Subsequent runs: Cached selectors used (~0.1 seconds, $0 cost!)
+
+### Next Steps
+
+Explore more features:
+
+- **[Complete Examples](https://github.com/SanjayPG/vibe-framework-demo)** - 15+ working examples
+- **[Parallel Testing](#parallel-testing)** - Run tests 2.5x-3.5x faster
+- **[Training Mode](#training-mode-for-cicd)** - Zero-cost CI/CD runs
+- **[Video Recording](#video-recording-playwright-compatible)** - Capture test execution
+- **[Advanced Features](#configuration-modes)** - Smart caching, reporting, and more
+
+---
+
 ## Installation
 
 ```bash
@@ -26,49 +128,39 @@ npm install @sdetsanjay/vibe-framework playwright
 
 **Note**: Playwright is a peer dependency and must be installed separately.
 
-## Quick Start
-
-```typescript
-import { chromium } from 'playwright';
-import { vibe } from '@sdetsanjay/vibe-framework';
-
-// Set your API key (or use environment variable)
-process.env.GROQ_API_KEY = 'your-groq-api-key';
-
-const browser = await chromium.launch();
-const page = await browser.newPage();
-
-// Create Vibe session
-const session = vibe()
-  .withPage(page)
-  .withMode('smart-cache')
-  .withAIProvider('GROQ', process.env.GROQ_API_KEY!)
-  .build();
-
-// Use natural language!
-await page.goto('https://www.saucedemo.com');
-await session.do('type "standard_user" into username field');
-await session.do('type "secret_sauce" into password field');
-await session.do('click the login button');
-
-const result = await session.check('verify products page loaded');
-console.log('Login successful:', result.success);
-
-await session.shutdown();
-await browser.close();
-```
+---
 
 ## Complete Examples
 
-See the [vibe-framework-demo](https://github.com/SanjayPG/vibe-framework-demo) repository for complete working examples, including:
-- SauceDemo login flow
-- Parallel test execution
-- Multiple AI provider configurations
-- Training mode examples
+See the [vibe-framework-demo](https://github.com/SanjayPG/vibe-framework-demo) repository for complete working examples:
+- ✅ Basic login flows
+- ✅ Advanced element handling (select boxes, alerts, windows)
+- ✅ Hybrid Playwright + Natural Language approach
+- ✅ Parallel test execution
+- ✅ Multiple AI provider configurations
+- ✅ Training mode for CI/CD
+- ✅ Utility scripts and workflows
 
-## Environment Setup
+---
 
-Create a `.env` file in your project root:
+## Supported AI Providers
+
+Choose the provider that fits your needs:
+
+| Provider | Speed | Cost | Free Tier | Get API Key |
+|----------|-------|------|-----------|-------------|
+| **Groq** | ⚡⚡⚡⚡⚡ Fastest | Free | ✅ Generous | [console.groq.com](https://console.groq.com/) |
+| **Gemini** | ⚡⚡⚡⚡ Very Fast | ~$0.03/100 cmds | ✅ Yes | [aistudio.google.com](https://aistudio.google.com/) |
+| **OpenAI** | ⚡⚡⚡ Fast | ~$0.10/100 cmds | ❌ No | [platform.openai.com](https://platform.openai.com/) |
+| **DeepSeek** | ⚡⚡⚡ Fast | ~$0.01/100 cmds | ✅ Yes | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **Anthropic** | ⚡⚡⚡ Fast | ~$0.30/100 cmds | ❌ No | [console.anthropic.com](https://console.anthropic.com/) |
+| **Local** | Varies | Free | ✅ Unlimited | Self-hosted (Ollama, etc.) |
+
+**Note:** With smart caching, subsequent runs cost **$0** regardless of provider!
+
+### Environment Configuration
+
+Add API keys to your `.env` file:
 
 ```env
 # Choose one or more providers:
@@ -82,45 +174,6 @@ GROK_API_KEY=your_key_here          # Grok
 # Or use local models (FREE!)
 AUTOHEAL_AI_PROVIDER=LOCAL
 LOCAL_MODEL_URL=https://your-tunnel.trycloudflare.com
-```
-
-**Recommended for getting started:**
-- **Fast & Free**: [Groq](https://console.groq.com/) - Fastest, generous free tier
-- **Free Tier**: [Gemini](https://aistudio.google.com/app/apikey) - Google's AI
-
-## Usage with Playwright Test
-
-```typescript
-import { test } from '@playwright/test';
-import { vibe } from '@sdetsanjay/vibe-framework';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-test('Login to application', async ({ page }) => {
-  const session = vibe()
-    .withPage(page)
-    .withMode('smart-cache')
-    .withAIProvider('GROQ', process.env.GROQ_API_KEY!)
-    .withReporting({ html: true, console: true })
-    .build();
-
-  await page.goto('https://www.saucedemo.com');
-
-  await session.do('type "standard_user" into username field');
-  await session.do('type "secret_sauce" into password field');
-  await session.do('click the login button');
-
-  const result = await session.check('verify products page loaded');
-  console.log('Login successful:', result.success);
-
-  await session.shutdown();
-});
-```
-
-Run tests with:
-```bash
-npx playwright test
 ```
 
 ## Parallel Testing
