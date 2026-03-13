@@ -7,6 +7,7 @@ import { DeepSeekService } from '../utils/DeepSeekService';
 import { GroqService } from '../utils/GroqService';
 import { LocalModelService } from '../utils/LocalModelService';
 import { AIProvider } from '../core/VibeConfiguration';
+import { ParseCache } from './ParseCache';
 
 /**
  * Configuration for NL Parser
@@ -36,10 +37,13 @@ export interface NLParserConfig {
 export class NLParser {
   private aiService?: AIService;
   private config: NLParserConfig;
-  private parseCache: Map<string, VibeCommand> = new Map();
+  private parseCache: ParseCache;
 
   constructor(config: NLParserConfig) {
     this.config = config;
+
+    // Initialize persistent parse cache
+    this.parseCache = new ParseCache('./autoheal-cache', 24 * 60 * 60 * 1000); // 24 hours TTL
 
     // Initialize AI service if AI parsing is enabled
     if (config.enableAIParsing) {
@@ -68,8 +72,9 @@ export class NLParser {
 
     // Check cache first
     const normalized = this.normalizeCommand(command);
-    if (this.parseCache.has(normalized)) {
-      const cached = this.parseCache.get(normalized)!;
+    const cached = this.parseCache.get(normalized);
+
+    if (cached) {
       console.log(`Parse cache HIT for: "${command}"`);
       return {
         ...cached,
@@ -97,8 +102,8 @@ export class NLParser {
         aiCalled: true
       };
 
-      // Cache the result
-      this.parseCache.set(normalized, result);
+      // Cache the result (in-memory, will be saved to disk at shutdown)
+      this.parseCache.put(normalized, result);
       console.log(`Parse cache MISS for: "${command}" - cached for next time`);
 
       return result;
@@ -243,7 +248,7 @@ export class NLParser {
    * Clear parse cache
    */
   clearCache(): void {
-    this.parseCache.clear();
+    this.parseCache.clearAll();
     console.log('Parse cache cleared');
   }
 
@@ -251,9 +256,14 @@ export class NLParser {
    * Get cache stats
    */
   getCacheStats(): { size: number; keys: string[] } {
-    return {
-      size: this.parseCache.size,
-      keys: Array.from(this.parseCache.keys())
-    };
+    return this.parseCache.getStats();
+  }
+
+  /**
+   * Shutdown - save cache to disk
+   * Call this at the end of your test session to persist cache
+   */
+  shutdown(): void {
+    this.parseCache.saveToDisk();
   }
 }

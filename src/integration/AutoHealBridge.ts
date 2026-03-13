@@ -175,13 +175,33 @@ export class AutoHealBridge {
     // Get the appropriate default model for the provider if not specified
     const model = this.config.aiModel || this.getDefaultModelForProvider(this.config.aiProvider);
 
-    return {
-      ai: {
+    // Build AI configuration - handle LOCAL provider specially
+    let aiConfig: any;
+    if (this.config.aiProvider === AIProvider.LOCAL && this.config.localModelConfig) {
+      // For LOCAL provider, pass full local model configuration
+      aiConfig = {
+        provider: this.mapAIProvider(this.config.aiProvider, AHAIProvider),
+        baseUrl: this.config.localModelConfig.baseUrl,
+        apiPath: this.config.localModelConfig.apiPath,
+        model: this.config.localModelConfig.model || model,
+        format: this.config.localModelConfig.format,
+        temperature: this.config.localModelConfig.temperature ?? 0.1,
+        maxTokens: this.config.localModelConfig.maxTokens,
+        timeout: this.config.localModelConfig.timeout,
+        headers: this.config.localModelConfig.headers
+      };
+    } else {
+      // For cloud providers, use standard config
+      aiConfig = {
         provider: this.mapAIProvider(this.config.aiProvider, AHAIProvider),
         apiKey: this.config.aiApiKey || process.env[this.getEnvVarForProvider(this.config.aiProvider)],
         model: model,
         temperature: 0.1
-      },
+      };
+    }
+
+    return {
+      ai: aiConfig,
       cache: {
         type: this.mapCacheType(this.config.cache.type, AHCacheType),
         maxSize: this.config.cache.maxSize,

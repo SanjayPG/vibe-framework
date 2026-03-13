@@ -788,5 +788,8 @@ Answer:`;
     } else {
       console.log('Shutting down Vibe session');
     }
+
+    // Save parse cache to disk
+    this.parser.shutdown();
   }
 }

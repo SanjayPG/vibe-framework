@@ -1,6 +1,6 @@
 {
   "name": "@sdetsanjay/vibe-framework",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Natural language automation framework with AI-powered element healing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -47,7 +47,7 @@
   },
   "homepage": "https://github.com/SanjayPG/vibe-framework#readme",
   "dependencies": {
-    "@sdetsanjay/autoheal-locator": "^1.1.0",
+    "@sdetsanjay/autoheal-locator": "^1.1.2",
     "@types/uuid": "^10.0.0",
     "dotenv": "^17.2.3",
     "proper-lockfile": "^4.1.2",

@@ -106,7 +106,8 @@ export class VibeBuilder {
     timeout?: number;
     format?: 'openai' | 'custom';
   }): this {
-    // Set LOCAL only for parsing, not for AutoHeal
+    // Set LOCAL for both parsing AND AutoHeal element finding
+    this.config.aiProvider = AIProvider.LOCAL;
     this.config.parsingProvider = AIProvider.LOCAL;
     this.config.localModelConfig = {
       baseUrl,
