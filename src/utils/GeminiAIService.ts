@@ -18,8 +18,8 @@ export class GeminiAIService implements AIService {
     const prompt = this.buildPrompt(request.command);
 
     try {
-      const response = await this.callGeminiAPI(prompt);
-      return this.parseResponse(response, request.command);
+      const { content, usage } = await this.callGeminiAPI(prompt);
+      return this.parseResponse(content, request.command, usage);
     } catch (error: any) {
       throw new Error(`Gemini AI parsing failed: ${error.message}`);
     }
@@ -58,7 +58,7 @@ Return JSON format:
 }`;
   }
 
-  private async callGeminiAPI(prompt: string): Promise<any> {
+  private async callGeminiAPI(prompt: string): Promise<{ content: string; usage: any }> {
     const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
 
     const response = await fetch(url, {
@@ -89,11 +89,13 @@ Return JSON format:
       throw new Error('No response from Gemini API');
     }
 
-    const text = data.candidates[0].content.parts[0].text;
-    return text;
+    const content = data.candidates[0].content.parts[0].text;
+    const usage = data.usageMetadata; // Extract token usage
+
+    return { content, usage };
   }
 
-  private parseResponse(responseText: string, originalCommand: string): ParseResponse {
+  private parseResponse(responseText: string, originalCommand: string, usage?: any): ParseResponse {
     try {
       // Remove markdown code blocks if present
       let cleanedText = responseText.trim();
@@ -113,12 +115,20 @@ Return JSON format:
       // Ensure confidence is between 0 and 1
       const confidence = Math.max(0, Math.min(1, parsed.confidence || 0.5));
 
+      // Extract token usage (Gemini format)
+      const tokenUsage = usage ? {
+        promptTokens: usage.promptTokenCount || 0,
+        completionTokens: usage.candidatesTokenCount || 0,
+        totalTokens: usage.totalTokenCount || 0
+      } : undefined;
+
       return {
         action: parsed.action as ActionType,
         element: parsed.element,
         parameters: parsed.parameters || {},
         confidence,
-        reasoning: parsed.reasoning
+        reasoning: parsed.reasoning,
+        tokenUsage
       };
     } catch (error: any) {
       throw new Error(`Failed to parse Gemini response: ${error.message}. Response: ${responseText}`);

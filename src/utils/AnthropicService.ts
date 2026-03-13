@@ -19,8 +19,8 @@ export class AnthropicService implements AIService {
     const prompt = this.buildPrompt(request.command);
 
     try {
-      const response = await this.callAnthropicAPI(prompt);
-      return this.parseResponse(response, request.command);
+      const { content, usage } = await this.callAnthropicAPI(prompt);
+      return this.parseResponse(content, request.command, usage);
     } catch (error: any) {
       throw new Error(`Anthropic parsing failed: ${error.message}`);
     }
@@ -59,7 +59,7 @@ Return JSON format:
 }`;
   }
 
-  private async callAnthropicAPI(prompt: string): Promise<any> {
+  private async callAnthropicAPI(prompt: string): Promise<{ content: string; usage: any }> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
@@ -93,10 +93,12 @@ Return JSON format:
     }
 
     const content = data.content[0].text;
-    return content;
+    const usage = data.usage; // Extract token usage
+
+    return { content, usage };
   }
 
-  private parseResponse(responseText: string, originalCommand: string): ParseResponse {
+  private parseResponse(responseText: string, originalCommand: string, usage?: any): ParseResponse {
     try {
       // Remove markdown code blocks if present
       let cleanedText = responseText.trim();
@@ -116,12 +118,20 @@ Return JSON format:
       // Ensure confidence is between 0 and 1
       const confidence = Math.max(0, Math.min(1, parsed.confidence || 0.5));
 
+      // Extract token usage (Anthropic format)
+      const tokenUsage = usage ? {
+        promptTokens: usage.input_tokens || 0,
+        completionTokens: usage.output_tokens || 0,
+        totalTokens: (usage.input_tokens || 0) + (usage.output_tokens || 0)
+      } : undefined;
+
       return {
         action: parsed.action as ActionType,
         element: parsed.element,
         parameters: parsed.parameters || {},
         confidence,
-        reasoning: parsed.reasoning
+        reasoning: parsed.reasoning,
+        tokenUsage
       };
     } catch (error: any) {
       throw new Error(`Failed to parse Anthropic response: ${error.message}. Response: ${responseText}`);

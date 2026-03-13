@@ -122,7 +122,10 @@ export class MetricsCollector {
     element: string,
     latencyMs: number,
     cacheHit: boolean,
-    aiCalled: boolean
+    aiCalled: boolean,
+    provider?: string,
+    model?: string,
+    tokenUsage?: { promptTokens: number; completionTokens: number; totalTokens: number }
   ): void {
     if (!this.currentAction) return;
 
@@ -132,10 +135,19 @@ export class MetricsCollector {
     this.currentAction.cache!.parseCache = cacheHit ? 'hit' : 'miss';
     this.currentAction.ai!.parseAICalled = aiCalled;
 
-    if (aiCalled) {
-      // Estimate cost: ~50 tokens input + 30 output = 80 tokens
-      // GPT-4o-mini: $0.15/1M input, $0.60/1M output
-      // ~$0.000012 per parse call
+    if (aiCalled && tokenUsage) {
+      // Calculate real cost using CostCalculator
+      const { CostCalculator } = require('../utils/CostCalculator');
+      const cost = CostCalculator.calculateCost(provider || 'GROQ', model || 'llama-3.3-70b-versatile', tokenUsage);
+      this.currentAction.ai!.estimatedCost += cost;
+
+      // Store token usage for transparency
+      if (!this.currentAction.ai!.tokenUsage) {
+        this.currentAction.ai!.tokenUsage = { parse: 0, healing: 0 };
+      }
+      this.currentAction.ai!.tokenUsage.parse = tokenUsage.totalTokens;
+    } else if (aiCalled) {
+      // Fallback to estimate if no token usage data
       this.currentAction.ai!.estimatedCost += 0.000012;
     }
   }

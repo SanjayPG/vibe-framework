@@ -122,7 +122,10 @@ export class VibeSession {
           parsedCommand.element || command,
           parseEnd - parseStart,
           parsedCommand.metadata?.cacheHit ?? false,
-          parsedCommand.metadata?.aiCalled ?? false
+          parsedCommand.metadata?.aiCalled ?? false,
+          this.config.aiProvider?.toString(),
+          this.config.aiModel,
+          parsedCommand.metadata?.tokenUsage
         );
       }
 

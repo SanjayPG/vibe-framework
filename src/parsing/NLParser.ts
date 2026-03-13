@@ -140,7 +140,8 @@ export class NLParser {
           metadata: {
             parsedBy: 'ai',
             parsingTime: Date.now(),
-            reasoning: response.reasoning
+            reasoning: response.reasoning,
+            tokenUsage: response.tokenUsage  // Include actual token usage
           }
         };
 

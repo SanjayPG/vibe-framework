@@ -49,6 +49,10 @@ export interface ActionMetrics {
     healingAICalled: boolean;
     model?: string;
     estimatedCost: number; // USD
+    tokenUsage?: {
+      parse: number;
+      healing: number;
+    };
   };
 
   /** Screenshot path if captured */

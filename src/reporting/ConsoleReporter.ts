@@ -76,6 +76,13 @@ export class ConsoleReporter {
         const aiInfo = `Parse: ${action.ai.parseAICalled ? 'Yes' : 'No'}, Healing: ${action.ai.healingAICalled ? 'Yes' : 'No'}`;
         console.log(`    ${this.dim('AI Calls:')} ${aiInfo}`);
         console.log(`    ${this.dim('Cost:')} $${action.ai.estimatedCost.toFixed(6)}`);
+
+        if (action.ai.tokenUsage) {
+          const totalTokens = (action.ai.tokenUsage.parse || 0) + (action.ai.tokenUsage.healing || 0);
+          if (totalTokens > 0) {
+            console.log(`    ${this.dim('Tokens:')} ${totalTokens} (Parse: ${action.ai.tokenUsage.parse || 0}, Healing: ${action.ai.tokenUsage.healing || 0})`);
+          }
+        }
       }
     }
 
@@ -162,6 +169,24 @@ export class ConsoleReporter {
     // Cost
     console.log(this.bright('  Cost Analysis:'));
     console.log(`    ${this.green('💰')} Estimated Total: ${this.green('$' + summary.aggregated.totalEstimatedCost.toFixed(6))}`);
+
+    // Calculate total tokens
+    const allActions = summary.tests.flatMap(t => t.actions);
+    let totalTokens = 0;
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+
+    allActions.forEach(action => {
+      if (action.ai.tokenUsage) {
+        totalPromptTokens += action.ai.tokenUsage.parse || 0;
+        totalCompletionTokens += action.ai.tokenUsage.healing || 0;
+        totalTokens += (action.ai.tokenUsage.parse || 0) + (action.ai.tokenUsage.healing || 0);
+      }
+    });
+
+    if (totalTokens > 0) {
+      console.log(`    ${this.green('🔢')} Total Tokens: ${this.green(totalTokens.toLocaleString())} (Prompt: ${totalPromptTokens.toLocaleString()}, Completion: ${totalCompletionTokens.toLocaleString()})`);
+    }
 
     if (summary.performance.mostExpensiveAction) {
       console.log(`    Most Expensive: ${summary.performance.mostExpensiveAction.command} ($${summary.performance.mostExpensiveAction.ai.estimatedCost.toFixed(6)})`);

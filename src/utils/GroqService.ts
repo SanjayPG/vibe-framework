@@ -20,8 +20,8 @@ export class GroqService implements AIService {
     const prompt = this.buildPrompt(request.command);
 
     try {
-      const response = await this.callGroqAPI(prompt);
-      return this.parseResponse(response, request.command);
+      const { content, usage } = await this.callGroqAPI(prompt);
+      return this.parseResponse(content, request.command, usage);
     } catch (error: any) {
       throw new Error(`Groq parsing failed: ${error.message}`);
     }
@@ -60,7 +60,7 @@ Return JSON format:
 }`;
   }
 
-  private async callGroqAPI(prompt: string): Promise<any> {
+  private async callGroqAPI(prompt: string): Promise<{ content: string; usage: any }> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
@@ -98,10 +98,12 @@ Return JSON format:
     }
 
     const content = data.choices[0].message.content;
-    return content;
+    const usage = data.usage; // Extract token usage
+
+    return { content, usage };
   }
 
-  private parseResponse(responseText: string, originalCommand: string): ParseResponse {
+  private parseResponse(responseText: string, originalCommand: string, usage?: any): ParseResponse {
     try {
       // Remove markdown code blocks if present
       let cleanedText = responseText.trim();
@@ -121,12 +123,20 @@ Return JSON format:
       // Ensure confidence is between 0 and 1
       const confidence = Math.max(0, Math.min(1, parsed.confidence || 0.5));
 
+      // Extract token usage
+      const tokenUsage = usage ? {
+        promptTokens: usage.prompt_tokens || 0,
+        completionTokens: usage.completion_tokens || 0,
+        totalTokens: usage.total_tokens || 0
+      } : undefined;
+
       return {
         action: parsed.action as ActionType,
         element: parsed.element,
         parameters: parsed.parameters || {},
         confidence,
-        reasoning: parsed.reasoning
+        reasoning: parsed.reasoning,
+        tokenUsage
       };
     } catch (error: any) {
       throw new Error(`Failed to parse Groq response: ${error.message}. Response: ${responseText}`);

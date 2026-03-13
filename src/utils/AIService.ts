@@ -8,6 +8,15 @@ export interface ParseRequest {
 }
 
 /**
+ * Token usage from AI response
+ */
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+/**
  * Response from AI parsing
  */
 export interface ParseResponse {
@@ -21,6 +30,7 @@ export interface ParseResponse {
   };
   confidence: number;
   reasoning?: string;
+  tokenUsage?: TokenUsage;  // NEW: Actual token usage from AI
 }
 
 /**

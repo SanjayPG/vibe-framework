@@ -75,8 +75,8 @@ export class LocalModelService implements AIService {
     const prompt = this.buildPrompt(request.command);
 
     try {
-      const response = await this.callLocalAPI(prompt);
-      return this.parseResponse(response, request.command);
+      const { content, usage } = await this.callLocalAPI(prompt);
+      return this.parseResponse(content, request.command, usage);
     } catch (error: any) {
       throw new Error(`Local model parsing failed: ${error.message}`);
     }
@@ -119,7 +119,7 @@ Return JSON format:
     return `${this.config.baseUrl}${this.config.apiPath}`;
   }
 
-  private async callLocalAPI(prompt: string): Promise<any> {
+  private async callLocalAPI(prompt: string): Promise<{ content: string; usage: any }> {
     const url = this.getFullUrl();
 
     // Build request body based on format
@@ -161,7 +161,10 @@ Return JSON format:
       const data = await response.json();
       console.log(`[LOCAL-MODEL] Response received`);
 
-      return this.extractContent(data);
+      const content = this.extractContent(data);
+      const usage = this.extractUsage(data); // Try to extract usage if available
+
+      return { content, usage };
     } catch (error: any) {
       clearTimeout(timeoutId);
 
@@ -248,7 +251,17 @@ Return JSON format:
     throw new Error(`Could not extract content from response. Response keys: ${Object.keys(data).join(', ')}`);
   }
 
-  private parseResponse(responseText: string, originalCommand: string): ParseResponse {
+  private extractUsage(data: any): any {
+    // Try to extract usage if the endpoint provides it (OpenAI-compatible)
+    if (data.usage) {
+      console.log(`[LOCAL-MODEL] Token usage found`);
+      return data.usage;
+    }
+    // Local models don't necessarily provide usage, return undefined (cost will be 0 anyway)
+    return undefined;
+  }
+
+  private parseResponse(responseText: string, originalCommand: string, usage?: any): ParseResponse {
     try {
       // Remove markdown code blocks if present
       let cleanedText = responseText.trim();
@@ -268,12 +281,20 @@ Return JSON format:
       // Ensure confidence is between 0 and 1
       const confidence = Math.max(0, Math.min(1, parsed.confidence || 0.5));
 
+      // Extract token usage if available (OpenAI-compatible format)
+      const tokenUsage = usage ? {
+        promptTokens: usage.prompt_tokens || 0,
+        completionTokens: usage.completion_tokens || 0,
+        totalTokens: usage.total_tokens || 0
+      } : undefined;
+
       return {
         action: parsed.action as ActionType,
         element: parsed.element,
         parameters: parsed.parameters || {},
         confidence,
-        reasoning: parsed.reasoning
+        reasoning: parsed.reasoning,
+        tokenUsage
       };
     } catch (error: any) {
       throw new Error(`Failed to parse local model response: ${error.message}. Response: ${responseText}`);

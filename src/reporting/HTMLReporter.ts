@@ -289,6 +289,19 @@ export class HTMLReporter {
     const allActions = summary.tests.flatMap(t => t.actions);
     const mostExpensive = summary.performance.mostExpensiveAction;
 
+    // Calculate total token usage
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+    let totalTokens = 0;
+
+    allActions.forEach(action => {
+      if (action.ai.tokenUsage) {
+        totalPromptTokens += action.ai.tokenUsage.parse || 0;
+        totalCompletionTokens += action.ai.tokenUsage.healing || 0;
+        totalTokens += (action.ai.tokenUsage.parse || 0) + (action.ai.tokenUsage.healing || 0);
+      }
+    });
+
     return `
     <section class="cost-breakdown">
         <h2>Cost Analysis</h2>
@@ -305,6 +318,13 @@ export class HTMLReporter {
                 <div class="cost-value">${summary.aggregated.healingAICalls}</div>
                 <div class="cost-label">Healing AI Calls</div>
             </div>
+            ${totalTokens > 0 ? `
+            <div class="cost-card">
+                <div class="cost-value">${totalTokens.toLocaleString()}</div>
+                <div class="cost-label">Total Tokens Used</div>
+                <div class="cost-detail">Prompt: ${totalPromptTokens.toLocaleString()} | Completion: ${totalCompletionTokens.toLocaleString()}</div>
+            </div>
+            ` : ''}
             ${mostExpensive ? `
             <div class="cost-card">
                 <div class="cost-value">$${mostExpensive.ai.estimatedCost.toFixed(6)}</div>
@@ -412,8 +432,21 @@ export class HTMLReporter {
                                     ${action.ai.parseAICalled ? '✓ Parse' : ''}
                                     ${action.ai.healingAICalled ? '✓ Healing' : ''}
                                     <span class="ai-badge">Cost: $${action.ai.estimatedCost.toFixed(6)}</span>
+                                    ${action.ai.tokenUsage ? `
+                                    <span class="token-badge">Tokens: ${(action.ai.tokenUsage.parse || 0) + (action.ai.tokenUsage.healing || 0)}</span>
+                                    ` : ''}
                                 </span>
                             </div>
+                            ${action.ai.tokenUsage && (action.ai.tokenUsage.parse > 0 || action.ai.tokenUsage.healing > 0) ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Token Breakdown:</span>
+                                <span class="detail-value">
+                                    ${action.ai.tokenUsage.parse > 0 ? `Parse: ${action.ai.tokenUsage.parse}` : ''}
+                                    ${action.ai.tokenUsage.parse > 0 && action.ai.tokenUsage.healing > 0 ? ' | ' : ''}
+                                    ${action.ai.tokenUsage.healing > 0 ? `Healing: ${action.ai.tokenUsage.healing}` : ''}
+                                </span>
+                            </div>
+                            ` : ''}
                             ` : ''}
                             ${action.error ? `
                             <div class="detail-row error">
@@ -1147,6 +1180,15 @@ export class HTMLReporter {
             border-radius: 3px;
             background: #fff3cd;
             color: #856404;
+        }
+
+        .token-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #d1ecf1;
+            color: #0c5460;
+            margin-left: 5px;
         }
 
         /* Screenshots */
