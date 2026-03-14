@@ -144,7 +144,8 @@ export class VibeSession {
           autoHealMeta.cacheHit ?? false,
           autoHealMeta.healed ?? false,
           autoHealMeta.selector,
-          this.config.aiModel || undefined
+          this.config.aiModel || undefined,
+          autoHealMeta.tokensUsed
         );
       }
 
