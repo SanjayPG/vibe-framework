@@ -160,7 +160,8 @@ export class MetricsCollector {
     cacheHit: boolean,
     healed: boolean,
     selector?: string,
-    model?: string
+    model?: string,
+    tokensUsed?: number
   ): void {
     if (!this.currentAction) return;
 
@@ -172,10 +173,40 @@ export class MetricsCollector {
       this.currentAction.ai!.healingAICalled = true;
       this.currentAction.ai!.model = model;
 
-      // Estimate cost: ~4000 tokens DOM + 100 output = 4100 tokens
-      // Varies by provider, using average
-      // Gemini: ~$0.0003, OpenAI: ~$0.0006
-      this.currentAction.ai!.estimatedCost += 0.0004;
+      // Calculate real cost from token usage if available
+      if (tokensUsed && tokensUsed > 0) {
+        const { CostCalculator } = require('../utils/CostCalculator');
+
+        // Assume 80% input tokens, 20% output tokens (typical for healing)
+        const estimatedPromptTokens = Math.floor(tokensUsed * 0.8);
+        const estimatedCompletionTokens = Math.ceil(tokensUsed * 0.2);
+
+        const tokenUsageObj = {
+          promptTokens: estimatedPromptTokens,
+          completionTokens: estimatedCompletionTokens,
+          totalTokens: tokensUsed
+        };
+
+        // Get the actual model name, using provider defaults if not specified
+        const provider = this.sessionConfig.aiProvider || 'GROQ';
+        const actualModel = model || this.sessionConfig.aiModel || this.getDefaultModelForProvider(provider);
+        const cost = CostCalculator.calculateCost(provider, actualModel, tokenUsageObj);
+
+        this.currentAction.ai!.estimatedCost += cost;
+        this.currentAction.ai!.model = actualModel;
+
+        // Store token usage for transparency
+        if (!this.currentAction.ai!.tokenUsage) {
+          this.currentAction.ai!.tokenUsage = { parse: 0, healing: 0 };
+        }
+        this.currentAction.ai!.tokenUsage.healing = tokensUsed;
+      } else {
+        // Fallback to estimate if no token data
+        // Estimate cost: ~4000 tokens DOM + 100 output = 4100 tokens
+        // Varies by provider, using average
+        // Gemini: ~$0.0003, OpenAI: ~$0.0006
+        this.currentAction.ai!.estimatedCost += 0.0004;
+      }
     }
   }
 
@@ -356,5 +387,20 @@ export class MetricsCollector {
         a.ai.estimatedCost > max.ai.estimatedCost ? a : max
       );
     }
+  }
+
+  /**
+   * Get default model for AI provider
+   */
+  private getDefaultModelForProvider(provider: string): string {
+    const defaultModels: Record<string, string> = {
+      'GEMINI': 'gemini-2.0-flash-exp',
+      'OPENAI': 'gpt-4o-mini',
+      'ANTHROPIC': 'claude-3-5-sonnet-20241022',
+      'DEEPSEEK': 'deepseek-chat',
+      'GROQ': 'llama-3.3-70b-versatile',
+      'LOCAL': 'local-model'
+    };
+    return defaultModels[provider] || 'gpt-4o-mini';
   }
 }

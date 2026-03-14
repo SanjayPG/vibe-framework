@@ -131,7 +131,8 @@ export class JSONExporter {
             parseAICalled: action.ai.parseAICalled,
             healingAICalled: action.ai.healingAICalled,
             model: action.ai.model,
-            estimatedCost: action.ai.estimatedCost
+            estimatedCost: action.ai.estimatedCost,
+            tokenUsage: action.ai.tokenUsage
           },
           // Include screenshots as base64 data URLs for unified report
           hasScreenshot: !!action.screenshot,

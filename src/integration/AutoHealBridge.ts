@@ -82,7 +82,22 @@ export class AutoHealBridge {
       // Determine if cache was hit or healing occurred
       const cacheHit = cacheAfter.hitCount > cacheBefore.hitCount;
       const cacheMiss = cacheAfter.missCount > cacheBefore.missCount;
-      const healed = metricsAfter.successful_requests > metricsBefore.successful_requests && cacheMiss;
+
+      // Check reporter for actual healing status
+      let healed = false;
+      try {
+        const reporter = this.autoHeal.getReporter?.();
+        if (reporter && reporter.reports && reporter.reports.length > 0) {
+          const lastReport = reporter.reports[reporter.reports.length - 1];
+          // Check if the strategy used was DOM_ANALYSIS or VISUAL_ANALYSIS
+          const { LocatorStrategy } = this.autoHealModule!;
+          healed = lastReport.strategy === LocatorStrategy.DOM_ANALYSIS ||
+                  lastReport.strategy === LocatorStrategy.VISUAL_ANALYSIS;
+        }
+      } catch (e) {
+        // Fallback to metrics-based detection
+        healed = metricsAfter.successful_requests > metricsBefore.successful_requests && cacheMiss;
+      }
 
       // Try to get the actual selector used by extracting element attributes
       let actualSelector = selector;
@@ -105,12 +120,26 @@ export class AutoHealBridge {
         actualSelector = selector;
       }
 
+      // Get token usage from autoheal-locator's reporter
+      let tokensUsed = 0;
+      try {
+        const reporter = this.autoHeal.getReporter?.();
+        if (reporter && reporter.reports && reporter.reports.length > 0) {
+          // Get the most recent report (last healing operation)
+          const lastReport = reporter.reports[reporter.reports.length - 1];
+          tokensUsed = lastReport.tokensUsed || 0;
+        }
+      } catch (e) {
+        // Silently ignore if reporter not available
+      }
+
       // Attach metadata to locator
       (locator as any)._autoHealMetadata = {
         cacheHit,
         healed,
         selector: actualSelector,
-        description
+        description,
+        tokensUsed
       };
 
       return locator as Locator & { _autoHealMetadata?: any };
@@ -200,12 +229,16 @@ export class AutoHealBridge {
       };
     }
 
+    // Ensure cache config has valid values (lru-cache requires at least one positive value)
+    const maxSize = this.config.cache.maxSize || 1000;  // Default to 1000 if 0 or undefined
+    const expireAfterWriteMs = this.config.cache.expireAfterWriteMs || 3600000; // Default to 1 hour
+
     return {
       ai: aiConfig,
       cache: {
         type: this.mapCacheType(this.config.cache.type, AHCacheType),
-        maxSize: this.config.cache.maxSize,
-        expireAfterWriteMs: this.config.cache.expireAfterWriteMs
+        maxSize: maxSize,
+        expireAfterWriteMs: expireAfterWriteMs
       },
       performance: {
         executionStrategy: this.mapExecutionStrategy(this.config.executionStrategy, AHExecutionStrategy),
